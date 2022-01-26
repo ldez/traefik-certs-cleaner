@@ -25,6 +25,24 @@ const (
 	flagDryRun       = "dry-run"
 )
 
+type configuration struct {
+	Source       string
+	Destination  string
+	Domain       string
+	ResolverName string
+	DryRun       bool
+}
+
+func newConfiguration(cliCtx *cli.Context) configuration {
+	return configuration{
+		Source:       cliCtx.Path(flagSrcFile),
+		Destination:  cliCtx.Path(flagDstFile),
+		Domain:       cliCtx.String(flagDomain),
+		ResolverName: cliCtx.String(flagResolverName),
+		DryRun:       cliCtx.Bool(flagDryRun),
+	}
+}
+
 func main() {
 	app := &cli.App{
 		Name:        "traefik-certs-cleaner",
@@ -66,7 +84,9 @@ func main() {
 				Value:   true,
 			},
 		},
-		Action: run,
+		Action: func(cliCtx *cli.Context) error {
+			return run(newConfiguration(cliCtx))
+		},
 	}
 
 	err := app.Run(os.Args)
@@ -75,54 +95,23 @@ func main() {
 	}
 }
 
-func run(cliCtx *cli.Context) error {
+func run(config configuration) error {
 	data := map[string]*acme.StoredData{}
-	err := readJSONFile(cliCtx.Path(flagSrcFile), &data)
+	err := readJSONFile(config.Source, &data)
 	if err != nil {
 		return err
 	}
 
-	target := cliCtx.String(flagDomain)
-
-	for rName, storedData := range data {
-		if cliCtx.String(flagResolverName) != "*" && cliCtx.String(flagResolverName) != rName {
-			continue
-		}
-
-		if target == "*" {
-			storedData.Certificates = make([]*acme.CertAndStore, 0)
-			continue
-		}
-
-		var keep []*acme.CertAndStore
-		for _, cert := range storedData.Certificates {
-			if strings.HasSuffix(cert.Domain.Main, target) || containsSuffixes(cert.Domain.SANs, target) {
-				continue
-			}
-			if strings.HasSuffix(cert.Certificate.Domain.Main, target) || containsSuffixes(cert.Certificate.Domain.SANs, target) {
-				continue
-			}
-
-			certificate, err := getX509Certificate(&cert.Certificate)
-			if err != nil {
-				return err
-			}
-
-			if strings.HasSuffix(certificate.Subject.CommonName, target) || containsSuffixes(certificate.DNSNames, target) {
-				continue
-			}
-
-			keep = append(keep, cert)
-		}
-
-		storedData.Certificates = keep
+	err = clean(config, data)
+	if err != nil {
+		return err
 	}
 
 	var encoder *json.Encoder
-	if cliCtx.Bool(flagDryRun) {
+	if config.DryRun {
 		encoder = json.NewEncoder(os.Stdout)
 	} else {
-		output, err := os.Create(cliCtx.Path(flagDstFile))
+		output, err := os.Create(config.Destination)
 		if err != nil {
 			return err
 		}
@@ -133,6 +122,44 @@ func run(cliCtx *cli.Context) error {
 
 	encoder.SetIndent("", "  ")
 	return encoder.Encode(data)
+}
+
+func clean(config configuration, data map[string]*acme.StoredData) error {
+	for rName, storedData := range data {
+		if config.ResolverName != "*" && config.ResolverName != rName {
+			continue
+		}
+
+		if config.Domain == "*" {
+			storedData.Certificates = make([]*acme.CertAndStore, 0)
+			continue
+		}
+
+		var keep []*acme.CertAndStore
+		for _, cert := range storedData.Certificates {
+			if strings.HasSuffix(cert.Domain.Main, config.Domain) || containsSuffixes(cert.Domain.SANs, config.Domain) {
+				continue
+			}
+			if strings.HasSuffix(cert.Certificate.Domain.Main, config.Domain) || containsSuffixes(cert.Certificate.Domain.SANs, config.Domain) {
+				continue
+			}
+
+			certificate, err := getX509Certificate(&cert.Certificate)
+			if err != nil {
+				return err
+			}
+
+			if strings.HasSuffix(certificate.Subject.CommonName, config.Domain) || containsSuffixes(certificate.DNSNames, config.Domain) {
+				continue
+			}
+
+			keep = append(keep, cert)
+		}
+
+		storedData.Certificates = keep
+	}
+
+	return nil
 }
 
 func containsSuffixes(domains []string, suffix string) bool {
