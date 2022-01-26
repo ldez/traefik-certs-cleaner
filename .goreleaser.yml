@@ -1,0 +1,50 @@
+project_name: traefik-certs-cleaner
+
+builds:
+  - binary: traefik-certs-cleaner
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+    env:
+      - GO111MODULE=on
+    goos:
+      - linux
+      - darwin
+      - windows
+      - freebsd
+      - openbsd
+    goarch:
+      - amd64
+      - '386'
+      - arm
+      - arm64
+    goarm:
+      - '7'
+      - '6'
+      - '5'
+
+    ignore:
+      - goos: darwin
+        goarch: 386
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^doc:'
+      - '^chore:'
+      - '^chore\(deps\):'
+      - '^test:'
+      - '^tests:'
+
+archives:
+  - id: tcc
+    name_template: '{{ .ProjectName }}_v{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
+    format: tar.gz
+    format_overrides:
+      - goos: windows
+        format: zip
+    files:
+      - LICENSE
