@@ -4,5 +4,6 @@ dist/
 dump/
 acme.json
 acme-backup.json
+acme-new.json
 traefik-certs-cleaner
 *.Dockerfile
