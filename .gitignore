@@ -1,0 +1,7 @@
+.idea/
+vendor/
+dist/
+dump/
+acme.json
+acme-backup.json
+traefik-certs-cleaner
