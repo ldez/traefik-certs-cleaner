@@ -11,9 +11,9 @@ If you appreciate this project:
 
 ## Description
 
-traefik-certs-cleaner is a simple helper to clean acme.json file.
+traefik-certs-cleaner is a simple helper to clean the Traefik `acme.json` file by removing certificates.
 
-It creates a new acme.json file (`acme-new.json` by default) without the certificates that you want to remove.
+It creates a new `acme.json` file (`acme-new.json` by default) without the certificates that you want to remove.
 After the cleaning, you should replace the content of the original `acme.json` by the content of the new file.
 Then you have to restart your Traefik instance.
 
