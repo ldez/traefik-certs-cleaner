@@ -35,6 +35,7 @@ GLOBAL OPTIONS:
    --dst value, -o value            Path to the output of the acme.json file. (default: "./acme-new.json") [$DST]
    --resolver-name value, -r value  Name of the resolver. Use * to handle all resolvers. (default: "*") [$RESOLVER_NAME]
    --domain value, -d value         Domains to remove. Use * to remove all certificates. (default: "*") [$DOMAIN]
+   --revoke                         Revoke certificates (default: false) [$REVOKE]
    --dry-run                        Dry run mode. (default: true) [$DRY_RUN]
    --help, -h                       show help (default: false)
 ```
@@ -67,25 +68,49 @@ The content of the new file is displayed to the console output.
 
 ### Remove all certificates
 
+Creates a new file `./acme-new.json`.
+
+Remove certificates:
+
 ```console
 $ traefik-certs-cleaner --src=./acme.json --dry-run=false
 ```
 
-Creates a new file `./acme-new.json`.
+Remove and revoke certificates:
+
+```console
+$ traefik-certs-cleaner --src=./acme.json --revoke --dry-run=false
+```
 
 ### Remove all certificates for a Specific Resolver
+
+Creates a new file `./acme-new.json`.
+
+Remove certificates:
 
 ```console
 $ traefik-certs-cleaner --src=./acme.json --resolver-name=myresolver --dry-run=false
 ```
 
-Creates a new file `./acme-new.json`.
+Remove and revoke certificates:
+
+```console
+$ traefik-certs-cleaner --src=./acme.json --resolver-name=myresolver --revoke --dry-run=false
+```
+
 
 ### Remove the certificates of a Specific Domain
+
+Creates a new file `./acme-new.json`.
+
+Remove certificates:
 
 ```console
 $ traefik-certs-cleaner --src=./acme.json --domain=example.com --dry-run=false
 ```
 
-Creates a new file `./acme-new.json`.
+Remove and revoke certificates:
 
+```console
+$ traefik-certs-cleaner --src=./acme.json --domain=example.com --revoke --dry-run=false
+```

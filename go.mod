@@ -4,6 +4,7 @@ go 1.17
 
 require (
 	github.com/ettle/strcase v0.1.1
+	github.com/go-acme/lego/v4 v4.6.0
 	github.com/traefik/traefik/v2 v2.6.0
 	github.com/urfave/cli/v2 v2.3.0
 )
@@ -38,7 +39,6 @@ require (
 	github.com/exoscale/egoscale v0.67.0 // indirect
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/form3tech-oss/jwt-go v3.2.3+incompatible // indirect
-	github.com/go-acme/lego/v4 v4.6.0 // indirect
 	github.com/go-errors/errors v1.0.1 // indirect
 	github.com/go-logr/logr v0.4.0 // indirect
 	github.com/go-resty/resty/v2 v2.1.1-0.20191201195748-d7b97669fe48 // indirect

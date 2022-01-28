@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/ettle/strcase"
+	"github.com/go-acme/lego/v4/lego"
 	"github.com/traefik/traefik/v2/pkg/provider/acme"
 	"github.com/urfave/cli/v2"
 )
@@ -22,6 +23,7 @@ const (
 	flagDstFile      = "dst"
 	flagDomain       = "domain"
 	flagResolverName = "resolver-name"
+	flagRevoke       = "revoke"
 	flagDryRun       = "dry-run"
 )
 
@@ -30,6 +32,7 @@ type configuration struct {
 	Destination  string
 	Domain       string
 	ResolverName string
+	Revoke       bool
 	DryRun       bool
 }
 
@@ -39,6 +42,7 @@ func newConfiguration(cliCtx *cli.Context) configuration {
 		Destination:  cliCtx.Path(flagDstFile),
 		Domain:       cliCtx.String(flagDomain),
 		ResolverName: cliCtx.String(flagResolverName),
+		Revoke:       cliCtx.Bool(flagRevoke),
 		DryRun:       cliCtx.Bool(flagDryRun),
 	}
 }
@@ -78,6 +82,12 @@ func main() {
 				Value:   "*",
 			},
 			&cli.BoolFlag{
+				Name:    flagRevoke,
+				Usage:   "Revoke certificates",
+				EnvVars: []string{strcase.ToSNAKE(flagRevoke)},
+				Value:   false,
+			},
+			&cli.BoolFlag{
 				Name:    flagDryRun,
 				Usage:   "Dry run mode.",
 				EnvVars: []string{strcase.ToSNAKE(flagDryRun)},
@@ -85,7 +95,7 @@ func main() {
 			},
 		},
 		Action: func(cliCtx *cli.Context) error {
-			return run(newConfiguration(cliCtx))
+			return cleaner{configuration: newConfiguration(cliCtx)}.run()
 		},
 	}
 
@@ -95,23 +105,27 @@ func main() {
 	}
 }
 
-func run(config configuration) error {
+type cleaner struct {
+	configuration
+}
+
+func (c cleaner) run() error {
 	data := map[string]*acme.StoredData{}
-	err := readJSONFile(config.Source, &data)
+	err := readJSONFile(c.Source, &data)
 	if err != nil {
 		return err
 	}
 
-	err = clean(config, data)
+	err = c.clean(c.configuration, data)
 	if err != nil {
 		return err
 	}
 
 	var encoder *json.Encoder
-	if config.DryRun {
+	if c.DryRun {
 		encoder = json.NewEncoder(os.Stdout)
 	} else {
-		output, err := os.Create(config.Destination)
+		output, err := os.Create(c.Destination)
 		if err != nil {
 			return err
 		}
@@ -124,23 +138,28 @@ func run(config configuration) error {
 	return encoder.Encode(data)
 }
 
-func clean(config configuration, data map[string]*acme.StoredData) error {
+func (c cleaner) clean(config configuration, data map[string]*acme.StoredData) error {
 	for rName, storedData := range data {
 		if config.ResolverName != "*" && config.ResolverName != rName {
 			continue
 		}
 
 		if config.Domain == "*" {
+			c.revoke(storedData.Account, storedData.Certificates)
 			storedData.Certificates = make([]*acme.CertAndStore, 0)
 			continue
 		}
 
 		var keep []*acme.CertAndStore
+		var toRevoke []*acme.CertAndStore
+
 		for _, cert := range storedData.Certificates {
 			if strings.HasSuffix(cert.Domain.Main, config.Domain) || containsSuffixes(cert.Domain.SANs, config.Domain) {
+				toRevoke = append(toRevoke, cert)
 				continue
 			}
 			if strings.HasSuffix(cert.Certificate.Domain.Main, config.Domain) || containsSuffixes(cert.Certificate.Domain.SANs, config.Domain) {
+				toRevoke = append(toRevoke, cert)
 				continue
 			}
 
@@ -150,6 +169,7 @@ func clean(config configuration, data map[string]*acme.StoredData) error {
 			}
 
 			if strings.HasSuffix(certificate.Subject.CommonName, config.Domain) || containsSuffixes(certificate.DNSNames, config.Domain) {
+				toRevoke = append(toRevoke, cert)
 				continue
 			}
 
@@ -157,9 +177,38 @@ func clean(config configuration, data map[string]*acme.StoredData) error {
 		}
 
 		storedData.Certificates = keep
+
+		c.revoke(storedData.Account, toRevoke)
 	}
 
 	return nil
+}
+
+func (c cleaner) revoke(account *acme.Account, certificates []*acme.CertAndStore) {
+	if !c.Revoke {
+		return
+	}
+
+	if !c.DryRun {
+		log.Println("Revoke certificate")
+		return
+	}
+
+	config := lego.NewConfig(account)
+	config.CADirURL = lego.LEDirectoryProduction
+	config.UserAgent = "ldez-traefik-certs-cleaner"
+
+	client, err := lego.NewClient(config)
+	if err != nil {
+		log.Fatalf("Could not create client: %v", err)
+	}
+
+	for _, certificate := range certificates {
+		err := client.Certificate.Revoke(certificate.Certificate.Certificate)
+		if err != nil {
+			log.Printf("Failed to revoke certificate for %s: %v", certificate.Domain, err)
+		}
+	}
 }
 
 func containsSuffixes(domains []string, suffix string) bool {
