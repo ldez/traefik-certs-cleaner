@@ -46,7 +46,7 @@ GLOBAL OPTIONS:
 
 You can use pre-compiled binaries:
 
-* To get the binary just download the latest release for your OS/Arch from [the releases page](https://github.com/ldez/traefik-certs-dumper/releases/)
+* To get the binary just download the latest release for your OS/Arch from [the releases page](https://github.com/ldez/traefik-certs-cleaner/releases/)
 * Unzip the archive.
 * Add `traefik-certs-cleaner` in your `PATH`.
 
