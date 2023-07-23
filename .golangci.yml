@@ -17,10 +17,13 @@ linters-settings:
   gofumpt:
     extra-rules: true
   depguard:
-    list-type: denylist
-    include-go-root: false
-    packages:
-      - github.com/pkg/errors
+    rules:
+      main:
+        deny:
+          - pkg: "github.com/instana/testify"
+            desc: not allowed
+          - pkg: "github.com/pkg/errors"
+            desc: Should be replaced by standard lib errors package
   funlen:
     lines: -1
     statements: 40
@@ -53,17 +56,54 @@ linters-settings:
       - github.com/mailgun/minheap
       - github.com/mailgun/multibuf
       - github.com/jaguilar/vt100
+  revive:
+    rules:
+      - name: struct-tag
+      - name: blank-imports
+      - name: context-as-argument
+      - name: context-keys-type
+      - name: dot-imports
+      - name: error-return
+      - name: error-strings
+      - name: error-naming
+      - name: exported
+        disabled: true
+      - name: if-return
+      - name: increment-decrement
+      - name: var-naming
+      - name: var-declaration
+      - name: package-comments
+        disabled: true
+      - name: range
+      - name: receiver-naming
+      - name: time-naming
+      - name: unexported-return
+      - name: indent-error-flow
+      - name: errorf
+      - name: empty-block
+      - name: superfluous-else
+      - name: unused-parameter
+        disabled: true
+      - name: unreachable-code
+      - name: redefines-builtin-id
 
 linters:
   enable-all: true
   disable:
+    - deadcode # deprecated
+    - exhaustivestruct # deprecated
     - golint # deprecated
+    - ifshort # deprecated
     - interfacer # deprecated
     - maligned # deprecated
+    - nosnakecase # deprecated
     - scopelint # deprecated
+    - structcheck # deprecated
+    - varcheck # deprecated
+    - cyclop # duplicate of gocyclo
     - sqlclosecheck # not relevant (SQL)
     - rowserrcheck # not relevant (SQL)
-    - cyclop # duplicate of gocyclo
+    - execinquery # not relevant (SQL)
     - lll
     - gas
     - dupl
@@ -79,9 +119,11 @@ linters:
     - wrapcheck
     - exhaustive
     - exhaustivestruct
+    - exhaustruct
     - ifshort
     - varnamelen
     - nilnil
+    - gosmopolitan  # not relevant
 
 issues:
   exclude-use-default: false
