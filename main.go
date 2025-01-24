@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/rand"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
@@ -8,10 +9,13 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math/big"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/ettle/strcase"
 	"github.com/go-acme/lego/v4/lego"
 	"github.com/traefik/traefik/v2/pkg/provider/acme"
@@ -50,7 +54,7 @@ func newConfiguration(cliCtx *cli.Context) configuration {
 func main() {
 	app := &cli.App{
 		Name:        "traefik-certs-cleaner",
-		Description: "Clean ACME certificates from Traefik acme.json file.",
+		Description: "Clean ACME certificates from Traefik acme.json file." + helpMessage(),
 		Usage:       "Traefik Certificates Cleaner",
 		Flags: []cli.Flag{
 			&cli.PathFlag{
@@ -96,6 +100,10 @@ func main() {
 		},
 		Action: func(cliCtx *cli.Context) error {
 			return cleaner{configuration: newConfiguration(cliCtx)}.run()
+		},
+		After: func(_ *cli.Context) error {
+			help()
+			return nil
 		},
 	}
 
@@ -254,4 +262,39 @@ func readJSONFile(acmeFile string, data interface{}) error {
 	}
 
 	return nil
+}
+
+func help() {
+	var maxInt int64 = 10 // -> 10%
+	if time.Now().Month() == time.December {
+		maxInt = 2 // -> 50%
+	}
+
+	n, _ := rand.Int(rand.Reader, big.NewInt(maxInt))
+	if n.Cmp(big.NewInt(0)) != 0 {
+		return
+	}
+
+	log.SetFlags(0)
+
+	log.Println(helpMessage())
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+}
+
+func helpMessage() string {
+	pStyle := lipgloss.NewStyle().
+		Padding(1).
+		BorderStyle(lipgloss.RoundedBorder()).
+		BorderForeground(lipgloss.Color("161")).
+		Align(lipgloss.Center)
+
+	hStyle := lipgloss.NewStyle().Bold(true)
+
+	s := fmt.Sprintln(hStyle.Render("Request for Donation."))
+	s += `
+I need your help!
+Donations fund the maintenance and development of traefik-certs-cleaner.
+Click on this link to donate: https://donate.ldez.dev`
+
+	return "\n" + pStyle.Render(s)
 }

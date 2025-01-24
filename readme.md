@@ -7,7 +7,7 @@
 
 If you appreciate this project:
 
-[![Sponsor](https://img.shields.io/badge/Sponsor%20me-%E2%9D%A4%EF%B8%8F-pink)](https://github.com/sponsors/ldez)
+[![Sponsor](https://img.shields.io/badge/Sponsor%20me-%E2%9D%A4%EF%B8%8F-pink)](https://donate.ldez.dev)
 
 ## Description
 
