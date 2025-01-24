@@ -18,7 +18,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/ettle/strcase"
 	"github.com/go-acme/lego/v4/lego"
-	"github.com/traefik/traefik/v3/pkg/provider/acme"
+	"github.com/ldez/traefik-certs-cleaner/internal/traefik"
 	"github.com/urfave/cli/v2"
 )
 
@@ -118,7 +118,7 @@ type cleaner struct {
 }
 
 func (c cleaner) run() error {
-	data := map[string]*acme.StoredData{}
+	data := map[string]*traefik.StoredData{}
 	err := readJSONFile(c.Source, &data)
 	if err != nil {
 		return err
@@ -146,7 +146,7 @@ func (c cleaner) run() error {
 	return encoder.Encode(data)
 }
 
-func (c cleaner) clean(config configuration, data map[string]*acme.StoredData) error {
+func (c cleaner) clean(config configuration, data map[string]*traefik.StoredData) error {
 	for rName, storedData := range data {
 		if config.ResolverName != "*" && config.ResolverName != rName {
 			continue
@@ -154,12 +154,12 @@ func (c cleaner) clean(config configuration, data map[string]*acme.StoredData) e
 
 		if config.Domain == "*" {
 			c.revoke(storedData.Account, storedData.Certificates)
-			storedData.Certificates = make([]*acme.CertAndStore, 0)
+			storedData.Certificates = make([]*traefik.CertAndStore, 0)
 			continue
 		}
 
-		var keep []*acme.CertAndStore
-		var toRevoke []*acme.CertAndStore
+		var keep []*traefik.CertAndStore
+		var toRevoke []*traefik.CertAndStore
 
 		for _, cert := range storedData.Certificates {
 			if strings.HasSuffix(cert.Domain.Main, config.Domain) || containsSuffixes(cert.Domain.SANs, config.Domain) {
@@ -192,7 +192,7 @@ func (c cleaner) clean(config configuration, data map[string]*acme.StoredData) e
 	return nil
 }
 
-func (c cleaner) revoke(account *acme.Account, certificates []*acme.CertAndStore) {
+func (c cleaner) revoke(account *traefik.Account, certificates []*traefik.CertAndStore) {
 	if !c.Revoke {
 		return
 	}
@@ -228,7 +228,7 @@ func containsSuffixes(domains []string, suffix string) bool {
 	return false
 }
 
-func getX509Certificate(cert *acme.Certificate) (*x509.Certificate, error) {
+func getX509Certificate(cert *traefik.Certificate) (*x509.Certificate, error) {
 	tlsCert, err := tls.X509KeyPair(cert.Certificate, cert.Key)
 	if err != nil {
 		return nil, err

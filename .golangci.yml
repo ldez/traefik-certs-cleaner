@@ -22,6 +22,7 @@ linters:
     - varnamelen
     - nilnil
     - gosmopolitan  # not relevant
+    - musttag
 
 linters-settings:
   govet:
@@ -112,6 +113,10 @@ issues:
   exclude-use-default: false
   max-issues-per-linter: 0
   max-same-issues: 0
+  exclude-rules:
+    - path: internal/traefik/
+      linters:
+        - tagalign
 
 run:
   timeout: 5m
