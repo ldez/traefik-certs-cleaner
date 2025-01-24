@@ -1,6 +1,27 @@
-run:
-  timeout: 5m
-  skip-files: []
+linters:
+  enable-all: true
+  disable:
+    - exportloopref # deprecated
+    - cyclop # duplicate of gocyclo
+    - sqlclosecheck # not relevant (SQL)
+    - rowserrcheck # not relevant (SQL)
+    - lll
+    - gosec
+    - dupl
+    - prealloc
+    - wsl
+    - nlreturn
+    - mnd
+    - testpackage
+    - paralleltest
+    - tparallel
+    - err113
+    - wrapcheck
+    - exhaustive
+    - exhaustruct
+    - varnamelen
+    - nilnil
+    - gosmopolitan  # not relevant
 
 linters-settings:
   govet:
@@ -87,33 +108,10 @@ linters-settings:
       - name: unreachable-code
       - name: redefines-builtin-id
 
-linters:
-  enable-all: true
-  disable:
-    - exportloopref # deprecated
-    - cyclop # duplicate of gocyclo
-    - sqlclosecheck # not relevant (SQL)
-    - rowserrcheck # not relevant (SQL)
-    - lll
-    - gosec
-    - dupl
-    - prealloc
-    - wsl
-    - nlreturn
-    - mnd
-    - testpackage
-    - paralleltest
-    - tparallel
-    - err113
-    - wrapcheck
-    - exhaustive
-    - exhaustruct
-    - varnamelen
-    - nilnil
-    - gosmopolitan  # not relevant
-
 issues:
   exclude-use-default: false
   max-issues-per-linter: 0
   max-same-issues: 0
 
+run:
+  timeout: 5m

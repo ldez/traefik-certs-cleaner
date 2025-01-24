@@ -9,7 +9,7 @@ builds:
     ldflags:
       - -s -w
     env:
-      - GO111MODULE=on
+      - CGO_ENABLED=0
     goos:
       - linux
       - darwin
@@ -50,3 +50,140 @@ archives:
         format: zip
     files:
       - LICENSE
+
+docker_manifests:
+  - name_template: 'ldez/traefik-certs-cleaner:{{ .Tag }}'
+    image_templates:
+      - 'ldez/traefik-certs-cleaner:{{ .Tag }}-amd64'
+      - 'ldez/traefik-certs-cleaner:{{ .Tag }}-arm64'
+      - 'ldez/traefik-certs-cleaner:{{ .Tag }}-armv7'
+      - 'ldez/traefik-certs-cleaner:{{ .Tag }}-armv6'
+      - 'ldez/traefik-certs-cleaner:{{ .Tag }}-386'
+  - name_template: 'ldez/traefik-certs-cleaner:latest'
+    image_templates:
+      - 'ldez/traefik-certs-cleaner:{{ .Tag }}-amd64'
+      - 'ldez/traefik-certs-cleaner:{{ .Tag }}-arm64'
+      - 'ldez/traefik-certs-cleaner:{{ .Tag }}-armv7'
+      - 'ldez/traefik-certs-cleaner:{{ .Tag }}-armv6'
+      - 'ldez/traefik-certs-cleaner:{{ .Tag }}-386'
+  - name_template: 'ldez/traefik-certs-cleaner:v{{ .Major }}.{{ .Minor }}'
+    image_templates:
+      - 'ldez/traefik-certs-cleaner:v{{ .Major }}.{{ .Minor }}-amd64'
+      - 'ldez/traefik-certs-cleaner:v{{ .Major }}.{{ .Minor }}-arm64'
+      - 'ldez/traefik-certs-cleaner:v{{ .Major }}.{{ .Minor }}-armv7'
+      - 'ldez/traefik-certs-cleaner:v{{ .Major }}.{{ .Minor }}-armv6'
+      - 'ldez/traefik-certs-cleaner:v{{ .Major }}.{{ .Minor }}-386'
+
+dockers:
+  - use: buildx
+    goos: linux
+    goarch: amd64
+    dockerfile: buildx.Dockerfile
+    image_templates:
+      - 'ldez/traefik-certs-cleaner:latest-amd64'
+      - 'ldez/traefik-certs-cleaner:{{ .Tag }}-amd64'
+      - 'ldez/traefik-certs-cleaner:v{{ .Major }}.{{ .Minor }}-amd64'
+    build_flag_templates:
+      - '--pull'
+      # https://github.com/opencontainers/image-spec/blob/main/annotations.md#pre-defined-annotation-keys
+      - '--label=org.opencontainers.image.title={{.ProjectName}}'
+      - '--label=org.opencontainers.image.description=Clean the Traefik acme.json file by removing and revoking certificates'
+      - '--label=org.opencontainers.image.source={{.GitURL}}'
+      - '--label=org.opencontainers.image.url={{.GitURL}}'
+      - '--label=org.opencontainers.image.documentation=https://github.com/ldez/traefik-certs-cleaner'
+      - '--label=org.opencontainers.image.created={{.Date}}'
+      - '--label=org.opencontainers.image.revision={{.FullCommit}}'
+      - '--label=org.opencontainers.image.version={{.Version}}'
+      - '--platform=linux/amd64'
+
+  - use: buildx
+    goos: linux
+    goarch: arm64
+    dockerfile: buildx.Dockerfile
+    image_templates:
+      - 'ldez/traefik-certs-cleaner:latest-arm64'
+      - 'ldez/traefik-certs-cleaner:latest-arm.v8' # only for compatibility with Seihon
+      - 'ldez/traefik-certs-cleaner:{{ .Tag }}-arm64'
+      - 'ldez/traefik-certs-cleaner:{{ .Tag }}-arm.v8' # only for compatibility with Seihon
+      - 'ldez/traefik-certs-cleaner:v{{ .Major }}.{{ .Minor }}-arm64'
+    build_flag_templates:
+      - '--pull'
+      # https://github.com/opencontainers/image-spec/blob/main/annotations.md#pre-defined-annotation-keys
+      - '--label=org.opencontainers.image.title={{.ProjectName}}'
+      - '--label=org.opencontainers.image.description=Clean the Traefik acme.json file by removing and revoking certificates'
+      - '--label=org.opencontainers.image.source={{.GitURL}}'
+      - '--label=org.opencontainers.image.url={{.GitURL}}'
+      - '--label=org.opencontainers.image.documentation=https://github.com/ldez/traefik-certs-cleaner'
+      - '--label=org.opencontainers.image.created={{.Date}}'
+      - '--label=org.opencontainers.image.revision={{.FullCommit}}'
+      - '--label=org.opencontainers.image.version={{.Version}}'
+      - '--platform=linux/arm64'
+
+  - use: buildx
+    goos: linux
+    goarch: arm
+    goarm: '7'
+    dockerfile: buildx.Dockerfile
+    image_templates:
+      - 'ldez/traefik-certs-cleaner:latest-armv7'
+      - 'ldez/traefik-certs-cleaner:latest-arm.v7' # only for compatibility with Seihon
+      - 'ldez/traefik-certs-cleaner:{{ .Tag }}-armv7'
+      - 'ldez/traefik-certs-cleaner:{{ .Tag }}-arm.v7' # only for compatibility with Seihon
+      - 'ldez/traefik-certs-cleaner:v{{ .Major }}.{{ .Minor }}-armv7'
+    build_flag_templates:
+      - '--pull'
+      # https://github.com/opencontainers/image-spec/blob/main/annotations.md#pre-defined-annotation-keys
+      - '--label=org.opencontainers.image.title={{.ProjectName}}'
+      - '--label=org.opencontainers.image.description=Clean the Traefik acme.json file by removing and revoking certificates'
+      - '--label=org.opencontainers.image.source={{.GitURL}}'
+      - '--label=org.opencontainers.image.url={{.GitURL}}'
+      - '--label=org.opencontainers.image.documentation=https://github.com/ldez/traefik-certs-cleaner'
+      - '--label=org.opencontainers.image.created={{.Date}}'
+      - '--label=org.opencontainers.image.revision={{.FullCommit}}'
+      - '--label=org.opencontainers.image.version={{.Version}}'
+      - '--platform=linux/arm/v7'
+
+  - use: buildx
+    goos: linux
+    goarch: arm
+    goarm: '6'
+    dockerfile: buildx.Dockerfile
+    image_templates:
+      - 'ldez/traefik-certs-cleaner:latest-armv6'
+      - 'ldez/traefik-certs-cleaner:latest-arm.v6' # only for compatibility with Seihon
+      - 'ldez/traefik-certs-cleaner:{{ .Tag }}-armv6'
+      - 'ldez/traefik-certs-cleaner:{{ .Tag }}-arm.v6' # only for compatibility with Seihon
+      - 'ldez/traefik-certs-cleaner:v{{ .Major }}.{{ .Minor }}-armv6'
+    build_flag_templates:
+      - '--pull'
+      # https://github.com/opencontainers/image-spec/blob/main/annotations.md#pre-defined-annotation-keys
+      - '--label=org.opencontainers.image.title={{.ProjectName}}'
+      - '--label=org.opencontainers.image.description=Clean the Traefik acme.json file by removing and revoking certificates'
+      - '--label=org.opencontainers.image.source={{.GitURL}}'
+      - '--label=org.opencontainers.image.url={{.GitURL}}'
+      - '--label=org.opencontainers.image.documentation=https://github.com/ldez/traefik-certs-cleaner'
+      - '--label=org.opencontainers.image.created={{.Date}}'
+      - '--label=org.opencontainers.image.revision={{.FullCommit}}'
+      - '--label=org.opencontainers.image.version={{.Version}}'
+      - '--platform=linux/arm/v6'
+
+  - use: buildx
+    goos: linux
+    goarch: '386'
+    dockerfile: buildx.Dockerfile
+    image_templates:
+      - 'ldez/traefik-certs-cleaner:latest-386'
+      - 'ldez/traefik-certs-cleaner:{{ .Tag }}-386'
+      - 'ldez/traefik-certs-cleaner:v{{ .Major }}.{{ .Minor }}-386'
+    build_flag_templates:
+      - '--pull'
+      # https://github.com/opencontainers/image-spec/blob/main/annotations.md#pre-defined-annotation-keys
+      - '--label=org.opencontainers.image.title={{.ProjectName}}'
+      - '--label=org.opencontainers.image.description=Clean the Traefik acme.json file by removing and revoking certificates'
+      - '--label=org.opencontainers.image.source={{.GitURL}}'
+      - '--label=org.opencontainers.image.url={{.GitURL}}'
+      - '--label=org.opencontainers.image.documentation=https://github.com/ldez/traefik-certs-cleaner'
+      - '--label=org.opencontainers.image.created={{.Date}}'
+      - '--label=org.opencontainers.image.revision={{.FullCommit}}'
+      - '--label=org.opencontainers.image.version={{.Version}}'
+      - '--platform=linux/386'
