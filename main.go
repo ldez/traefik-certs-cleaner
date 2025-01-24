@@ -18,7 +18,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/ettle/strcase"
 	"github.com/go-acme/lego/v4/lego"
-	"github.com/traefik/traefik/v2/pkg/provider/acme"
+	"github.com/traefik/traefik/v3/pkg/provider/acme"
 	"github.com/urfave/cli/v2"
 )
 
