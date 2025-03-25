@@ -166,7 +166,7 @@ func (c cleaner) clean(config configuration, data map[string]*traefik.StoredData
 				toRevoke = append(toRevoke, cert)
 				continue
 			}
-			if strings.HasSuffix(cert.Certificate.Domain.Main, config.Domain) || containsSuffixes(cert.Certificate.Domain.SANs, config.Domain) {
+			if strings.HasSuffix(cert.Domain.Main, config.Domain) || containsSuffixes(cert.Domain.SANs, config.Domain) {
 				toRevoke = append(toRevoke, cert)
 				continue
 			}
