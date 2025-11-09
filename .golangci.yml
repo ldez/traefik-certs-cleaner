@@ -118,10 +118,8 @@ linters:
 
   exclusions:
     warn-unused: true
-    rules:
-      - linters:
-          - tagalign
-        path: internal/traefik/
+    paths:
+      - internal/traefik/
 
 issues:
   max-issues-per-linter: 0

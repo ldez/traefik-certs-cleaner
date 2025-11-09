@@ -119,6 +119,7 @@ type cleaner struct {
 
 func (c cleaner) run() error {
 	data := map[string]*traefik.StoredData{}
+
 	err := readJSONFile(c.Source, &data)
 	if err != nil {
 		return err
@@ -137,12 +138,14 @@ func (c cleaner) run() error {
 		if err != nil {
 			return err
 		}
+
 		defer func() { _ = output.Close() }()
 
 		encoder = json.NewEncoder(output)
 	}
 
 	encoder.SetIndent("", "  ")
+
 	return encoder.Encode(data)
 }
 
@@ -155,17 +158,21 @@ func (c cleaner) clean(config configuration, data map[string]*traefik.StoredData
 		if config.Domain == "*" {
 			c.revoke(storedData.Account, storedData.Certificates)
 			storedData.Certificates = make([]*traefik.CertAndStore, 0)
+
 			continue
 		}
 
-		var keep []*traefik.CertAndStore
-		var toRevoke []*traefik.CertAndStore
+		var (
+			keep     []*traefik.CertAndStore
+			toRevoke []*traefik.CertAndStore
+		)
 
 		for _, cert := range storedData.Certificates {
 			if strings.HasSuffix(cert.Domain.Main, config.Domain) || containsSuffixes(cert.Domain.SANs, config.Domain) {
 				toRevoke = append(toRevoke, cert)
 				continue
 			}
+
 			if strings.HasSuffix(cert.Domain.Main, config.Domain) || containsSuffixes(cert.Domain.SANs, config.Domain) {
 				toRevoke = append(toRevoke, cert)
 				continue
@@ -225,6 +232,7 @@ func containsSuffixes(domains []string, suffix string) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -245,11 +253,12 @@ func getX509Certificate(cert *traefik.Certificate) (*x509.Certificate, error) {
 	return crt, err
 }
 
-func readJSONFile(acmeFile string, data interface{}) error {
+func readJSONFile(acmeFile string, data any) error {
 	source, err := os.Open(filepath.Clean(acmeFile))
 	if err != nil {
 		return fmt.Errorf("failed to open file %q: %w", acmeFile, err)
 	}
+
 	defer func() { _ = source.Close() }()
 
 	err = json.NewDecoder(source).Decode(data)
@@ -257,6 +266,7 @@ func readJSONFile(acmeFile string, data interface{}) error {
 		log.Printf("warn: file %q may not be ready: %v", acmeFile, err)
 		return nil
 	}
+
 	if err != nil {
 		return fmt.Errorf("failed to unmarshal file %q: %w", acmeFile, err)
 	}
