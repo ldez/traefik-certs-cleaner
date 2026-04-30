@@ -15,7 +15,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
 	"github.com/ettle/strcase"
 	"github.com/go-acme/lego/v4/lego"
 	"github.com/ldez/traefik-certs-cleaner/internal/traefik"
