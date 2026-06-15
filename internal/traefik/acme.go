@@ -5,8 +5,7 @@ import (
 	"crypto"
 	"crypto/x509"
 
-	"github.com/go-acme/lego/v4/certcrypto"
-	"github.com/go-acme/lego/v4/registration"
+	"github.com/go-acme/lego/v5/acme"
 )
 
 // StoredData represents the data managed by Store.
@@ -18,9 +17,9 @@ type StoredData struct {
 // Account is used to store lets encrypt registration info.
 type Account struct {
 	Email        string
-	Registration *registration.Resource
+	Registration *Resource
 	PrivateKey   []byte
-	KeyType      certcrypto.KeyType
+	KeyType      string
 }
 
 // GetEmail returns email.
@@ -29,12 +28,19 @@ func (a *Account) GetEmail() string {
 }
 
 // GetRegistration returns lets encrypt registration resource.
-func (a *Account) GetRegistration() *registration.Resource {
-	return a.Registration
+func (a *Account) GetRegistration() *acme.ExtendedAccount {
+	if a.Registration == nil {
+		return nil
+	}
+
+	return &acme.ExtendedAccount{
+		Account:  a.Registration.Body,
+		Location: a.Registration.URI,
+	}
 }
 
 // GetPrivateKey returns private key.
-func (a *Account) GetPrivateKey() crypto.PrivateKey {
+func (a *Account) GetPrivateKey() crypto.Signer {
 	privateKey, err := x509.ParsePKCS1PrivateKey(a.PrivateKey)
 	if err != nil {
 		return nil
@@ -43,13 +49,18 @@ func (a *Account) GetPrivateKey() crypto.PrivateKey {
 	return privateKey
 }
 
+type Resource struct {
+	Body acme.Account `json:"body"`
+	URI  string       `json:"uri,omitempty"`
+}
+
 // CertAndStore allows mapping a TLS certificate to a TLS store.
 type CertAndStore struct {
 	Certificate
 	Store string
 }
 
-// Certificate is a struct which contains all data needed from an ACME certificate.
+// Certificate is a struct that contains all data needed from an ACME certificate.
 type Certificate struct {
 	Domain      Domain `json:"domain,omitempty" toml:"domain,omitempty" yaml:"domain,omitempty"`
 	Certificate []byte `json:"certificate,omitempty" toml:"certificate,omitempty" yaml:"certificate,omitempty"`

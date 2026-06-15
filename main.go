@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/tls"
 	"crypto/x509"
@@ -17,7 +18,7 @@ import (
 
 	"charm.land/lipgloss/v2"
 	"github.com/ettle/strcase"
-	"github.com/go-acme/lego/v4/lego"
+	"github.com/go-acme/lego/v5/lego"
 	"github.com/ldez/traefik-certs-cleaner/internal/traefik"
 	"github.com/urfave/cli/v2"
 )
@@ -99,7 +100,7 @@ func main() {
 			},
 		},
 		Action: func(cliCtx *cli.Context) error {
-			return cleaner{configuration: newConfiguration(cliCtx)}.run()
+			return cleaner{configuration: newConfiguration(cliCtx)}.run(cliCtx.Context)
 		},
 		After: func(_ *cli.Context) error {
 			help()
@@ -117,7 +118,7 @@ type cleaner struct {
 	configuration
 }
 
-func (c cleaner) run() error {
+func (c cleaner) run(ctx context.Context) error {
 	data := map[string]*traefik.StoredData{}
 
 	err := readJSONFile(c.Source, &data)
@@ -125,7 +126,7 @@ func (c cleaner) run() error {
 		return err
 	}
 
-	err = c.clean(c.configuration, data)
+	err = c.clean(ctx, c.configuration, data)
 	if err != nil {
 		return err
 	}
@@ -149,14 +150,14 @@ func (c cleaner) run() error {
 	return encoder.Encode(data)
 }
 
-func (c cleaner) clean(config configuration, data map[string]*traefik.StoredData) error {
+func (c cleaner) clean(ctx context.Context, config configuration, data map[string]*traefik.StoredData) error {
 	for rName, storedData := range data {
 		if config.ResolverName != "*" && config.ResolverName != rName {
 			continue
 		}
 
 		if config.Domain == "*" {
-			c.revoke(storedData.Account, storedData.Certificates)
+			c.revoke(ctx, storedData.Account, storedData.Certificates)
 			storedData.Certificates = make([]*traefik.CertAndStore, 0)
 
 			continue
@@ -193,13 +194,13 @@ func (c cleaner) clean(config configuration, data map[string]*traefik.StoredData
 
 		storedData.Certificates = keep
 
-		c.revoke(storedData.Account, toRevoke)
+		c.revoke(ctx, storedData.Account, toRevoke)
 	}
 
 	return nil
 }
 
-func (c cleaner) revoke(account *traefik.Account, certificates []*traefik.CertAndStore) {
+func (c cleaner) revoke(ctx context.Context, account *traefik.Account, certificates []*traefik.CertAndStore) {
 	if !c.Revoke {
 		return
 	}
@@ -210,7 +211,7 @@ func (c cleaner) revoke(account *traefik.Account, certificates []*traefik.CertAn
 	}
 
 	config := lego.NewConfig(account)
-	config.CADirURL = lego.LEDirectoryProduction
+	config.CADirURL = lego.DirectoryURLLetsEncrypt
 	config.UserAgent = "ldez-traefik-certs-cleaner"
 
 	client, err := lego.NewClient(config)
@@ -219,7 +220,7 @@ func (c cleaner) revoke(account *traefik.Account, certificates []*traefik.CertAn
 	}
 
 	for _, certificate := range certificates {
-		err := client.Certificate.Revoke(certificate.Certificate.Certificate)
+		err := client.Certificate.Revoke(ctx, certificate.Certificate.Certificate)
 		if err != nil {
 			log.Printf("Failed to revoke certificate for %s: %v", certificate.Domain, err)
 		}
