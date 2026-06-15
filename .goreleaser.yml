@@ -54,6 +54,7 @@ archives:
 dockers_v2:
   - images:
       - 'ldez/traefik-certs-cleaner'
+      - 'ghcr.io/ldez/traefik-certs-cleaner'
     dockerfile: buildx.Dockerfile
     platforms:
       - linux/amd64
